@@ -347,6 +347,8 @@ class JsonRpcClientBase(object):
             self.connect()
             self._log.debug('adorokhine, is_app_running 3')
             running = True
+        except:
+            logging.exception('Exception occurred from connect call!')
         finally:
             self._log.debug('adorokhine, is_app_running 4')
             self.close()
