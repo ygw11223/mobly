@@ -183,11 +183,16 @@ class JsonRpcClientBase(object):
         Raises:
             AppStartError: When the app was not able to be started.
         """
+        self._log.debug('adorokhine, starting app %s', self.app_name)
         self.check_app_installed()
         self._do_start_app()
+        self._log.debug('adorokhine, app started, trying to connect')
         for _ in range(wait_time):
+            self._log.debug('adorokhine, trying to connect, pass 1.1')
             time.sleep(1)
+            self._log.debug('adorokhine, trying to connect, pass 1.2')
             if self._is_app_running():
+                self._log.debug('adorokhine, trying to connect, pass 1.3')
                 self._log.debug('Successfully started %s', self.app_name)
                 return
         raise AppStartError('%s failed to start on %s.' %
@@ -211,25 +216,37 @@ class JsonRpcClientBase(object):
             socket.timeout: Raised when the socket waits to long for connection.
             ProtocolError: Raised when there is an error in the protocol.
         """
+        self._log.debug('adorokhine, connect 1 %s %s', uid, cmd)
         self._counter = self._id_counter()
+        self._log.debug('adorokhine, connect 2 %s', self._counter)
         self._conn = socket.create_connection(('127.0.0.1', self.host_port),
                                               _SOCKET_CONNECTION_TIMEOUT)
+        self._log.debug('adorokhine, connect 3')
         self._conn.settimeout(_SOCKET_READ_TIMEOUT)
+        self._log.debug('adorokhine, connect 4')
         self._client = self._conn.makefile(mode='brw')
 
         resp = self._cmd(cmd, uid)
+        self._log.debug('adorokhine, connect 5 %s', resp)
         if not resp:
+            self._log.debug('adorokhine, connect 6')
             raise ProtocolError(ProtocolError.NO_RESPONSE_FROM_HANDSHAKE)
         result = json.loads(str(resp, encoding='utf8'))
         if result['status']:
+            self._log.debug('adorokhine, connect 7')
             self.uid = result['uid']
         else:
+            self._log.debug('adorokhine, connect 8')
             self.uid = UNKNOWN_UID
+        self._log.debug('adorokhine, connect 9')
 
     def close(self):
         """Close the connection to the remote client."""
+        self._log.debug('adorokhine, close 1')
         if self._conn:
+            self._log.debug('adorokhine, close 2')
             self._conn.close()
+            self._log.debug('adorokhine, close 3')
             self._conn = None
 
     def _grep(self, regex, output):
@@ -318,12 +335,17 @@ class JsonRpcClientBase(object):
 
         May be overridden by subclasses with custom sanity checks.
         """
+        self._log.debug('adorokhine, is_app_running 1')
         running = False
         try:
+            self._log.debug('adorokhine, is_app_running 2')
             self.connect()
+            self._log.debug('adorokhine, is_app_running 3')
             running = True
         finally:
+            self._log.debug('adorokhine, is_app_running 4')
             self.close()
+            self._log.debug('adorokhine, is_app_running 5')
             # This 'return' squashes exceptions from connect()
             return running
 

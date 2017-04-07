@@ -326,15 +326,17 @@ def start_standing_subprocess(cmd, check_health_delay=0, shell=False):
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         shell=shell)
-    logging.debug('Start standing subprocess with cmd: %s', cmd)
+    logging.debug('adorokhine, subprocess started')
     # Leaving stdin open causes problems for input, e.g. breaking the
     # code.inspect() shell (http://stackoverflow.com/a/25512460/1612937), so
     # explicitly close it assuming it is not needed for standing subprocesses.
     proc.stdin.close()
     proc.stdin = None
     if check_health_delay > 0:
+        logging.debug('adorokhine, checking health delay')
         time.sleep(check_health_delay)
         _assert_subprocess_running(proc)
+        logging.debug('adorokhine, subprocess is running')
     return proc
 
 
