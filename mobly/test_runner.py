@@ -56,6 +56,7 @@ def main(argv=None):
               input.
     """
     # Parse cli args.
+    logging.basicConfig(logging.DEBUG)
     parser = argparse.ArgumentParser(description='Mobly Test Executable.')
     parser.add_argument(
         '-c',

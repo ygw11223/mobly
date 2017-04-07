@@ -225,7 +225,7 @@ class JsonRpcClientBase(object):
         self._conn.settimeout(_SOCKET_READ_TIMEOUT)
         self._log.debug('adorokhine, connect 4')
         self._client = self._conn.makefile(mode='brw')
-
+        self._log.debug('adorokhine, connect 4.1')
         resp = self._cmd(cmd, uid)
         self._log.debug('adorokhine, connect 5 %s', resp)
         if not resp:
@@ -282,14 +282,19 @@ class JsonRpcClientBase(object):
         Returns:
             The line that was written back.
         """
+        self._log.debug('adorokhine, _cmd 1')
         if not uid:
+            self._log.debug('adorokhine, _cmd 2')
             uid = self.uid
+        self._log.debug('adorokhine, _cmd 3')
         self._client.write(
             json.dumps({
                 'cmd': command,
                 'uid': uid
             }).encode("utf8") + b'\n')
+        self._log.debug('adorokhine, _cmd 4')
         self._client.flush()
+        self._log.debug('adorokhine, _cmd 5')
         return self._client.readline()
 
     def _rpc(self, method, *args):
