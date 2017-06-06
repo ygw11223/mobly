@@ -12,8 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """JSON RPC interface to Mobly Snippet Lib."""
+import errno
 import logging
 import re
+import socket
 import time
 
 from mobly import utils
@@ -36,6 +38,12 @@ _STOP_CMD = (
 # Maximum time to wait for a v0 snippet to start on the device (10 minutes).
 # TODO(adorokhine): delete this in Mobly 1.6 when snippet v0 support is removed.
 _APP_START_WAIT_TIME_V0 = 10 * 60
+
+# Maximum time to wait for a v1 snippet socket to become active (30 seconds).
+# By the time we try to connect to the socket, the app has already launched and
+# started its server, so we only need to wait for the 'adb forward' call to
+# propagate. This should happen very quickly.
+_APP_START_WAIT_TIME_V1 = 30
 
 
 class Error(Exception):
@@ -259,7 +267,24 @@ class SnippetClient(jsonrpc_client_base.JsonRpcClientBase):
         self._adb.forward(
             ['tcp:%d' % self.host_port,
              'tcp:%d' % self.device_port])
-        self.connect()
+        start_time = time.time()
+        expiration_time = start_time + _APP_START_WAIT_TIME_V1
+        while time.time() < expiration_time:
+            self.log.debug('Attempting to connect to %s.', self.package)
+            try:
+                self.connect()
+                return
+            except socket.error as e:
+                # We have seen 'Connection reset by peer' trying to use these
+                # sockets soon after creation, so retry for a short period of
+                # time, only for this error message.
+                if e.errno != errno.ECONNRESET:
+                    raise
+                self.log.debug(
+                    'v1 snippet %s socket is not yet responsive, retrying',
+                    self.package,
+                    exc_info=True)
+                time.sleep(1)
 
     def _read_protocol_line(self):
         """Reads the next line of instrumentation output relevant to snippets.
